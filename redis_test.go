@@ -77,3 +77,17 @@ func TestSortedSet(t *testing.T) {
 	assert.Equal(t, "Shalma", client.ZPopMax(ctx, "scores").Val()[0].Member)
 	assert.Equal(t, "Firlana", client.ZPopMax(ctx, "scores").Val()[0].Member)
 }
+
+func TestHash(t *testing.T) {
+	client.HSet(ctx, "user:1", "id", "1")
+	client.HSet(ctx, "user:1", "name", "Yusuf")
+	client.HSet(ctx, "user:1", "email", "yusuf@mail.com")
+
+	user := client.HGetAll(ctx, "user:1").Val()
+
+	assert.Equal(t, "1", user["id"])
+	assert.Equal(t, "Yusuf", user["name"])
+	assert.Equal(t, "yusuf@mail.com", user["email"])
+
+	client.Del(ctx, "user:1")
+}
