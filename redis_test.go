@@ -2,6 +2,7 @@ package belajar_golang_redis
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -148,4 +149,40 @@ func TestTransaction(t *testing.T) {
 
 	assert.Equal(t, "Yusuf", client.Get(ctx, "name").Val())
 	assert.Equal(t, "Cimahi", client.Get(ctx, "address").Val())
+}
+
+func TestPublishStream(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		err := client.XAdd(ctx, &redis.XAddArgs{
+			Stream: "members",
+			Values: map[string]interface{}{
+				"name":    "Yusuf",
+				"address": "Indonesia",
+			},
+		}).Err()
+		assert.Nil(t, err)
+	}
+}
+
+func TestCreateConsumerGroup(t *testing.T) {
+	client.XGroupCreate(ctx, "members", "group-1", "0")
+	client.XGroupCreateConsumer(ctx, "members", "group-1", "consumer-1")
+	client.XGroupCreateConsumer(ctx, "members", "group-1", "consumer-2")
+}
+
+func TestConsumeStream(t *testing.T) {
+	streams := client.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Group:    "group-1",
+		Consumer: "consumer-1",
+		Streams:  []string{"members", ">"},
+		Count:    2,
+		Block:    5 * time.Second,
+	}).Val()
+
+	for _, stream := range streams {
+		for _, message := range stream.Messages {
+			fmt.Println(message.ID)
+			fmt.Println(message.Values)
+		}
+	}
 }
