@@ -3,6 +3,7 @@ package belajar_golang_redis
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -184,5 +185,22 @@ func TestConsumeStream(t *testing.T) {
 			fmt.Println(message.ID)
 			fmt.Println(message.Values)
 		}
+	}
+}
+
+func TestSubscribePubSub(t *testing.T) {
+	subscriber := client.Subscribe(ctx, "channel-1")
+	defer subscriber.Close()
+	for i := 0; i < 10; i++ {
+		message, err := subscriber.ReceiveMessage(ctx)
+		assert.Nil(t, err)
+		fmt.Println(message.Payload)
+	}
+}
+
+func TestPublishPubSub(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		err := client.Publish(ctx, "channel-1", "Hello "+strconv.Itoa(i)).Err()
+		assert.Nil(t, err)
 	}
 }
